@@ -54,8 +54,8 @@ import { Form } from '../form/form';
 import { useStep } from '../stepper';
 import { type TAddTemplateFieldsFormSchema, ZAddTemplateFieldsFormSchema } from './add-template-fields.types';
 
-const MIN_HEIGHT_PX = 12;
-const MIN_WIDTH_PX = 36;
+const MIN_HEIGHT_PX = 6;
+const MIN_WIDTH_PX = 12;
 
 const DEFAULT_HEIGHT_PX = MIN_HEIGHT_PX * 2.5;
 const DEFAULT_WIDTH_PX = MIN_WIDTH_PX * 2.5;

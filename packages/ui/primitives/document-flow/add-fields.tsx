@@ -46,8 +46,8 @@ import { FieldAdvancedSettings } from './field-item-advanced-settings';
 import { MissingSignatureFieldDialog } from './missing-signature-field-dialog';
 import { type DocumentFlowStep, FRIENDLY_FIELD_TYPE } from './types';
 
-const MIN_HEIGHT_PX = 12;
-const MIN_WIDTH_PX = 36;
+const MIN_HEIGHT_PX = 6;
+const MIN_WIDTH_PX = 12;
 
 const DEFAULT_HEIGHT_PX = MIN_HEIGHT_PX * 2.5;
 const DEFAULT_WIDTH_PX = MIN_WIDTH_PX * 2.5;
