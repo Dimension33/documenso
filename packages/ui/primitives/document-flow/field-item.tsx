@@ -284,7 +284,7 @@ const FieldItemInner = ({
 
       <div
         className={cn(
-          'group/field-item relative flex h-full w-full items-center justify-center rounded-[2px] bg-white/90 px-2 ring-2 transition-colors',
+          'group/field-item relative flex h-full w-full items-center justify-center rounded-[2px] bg-white/90 ring-1 transition-colors',
           !hasErrors && signerStyles.base,
           !hasErrors && signerStyles.fieldItem,
           fieldClassName,
