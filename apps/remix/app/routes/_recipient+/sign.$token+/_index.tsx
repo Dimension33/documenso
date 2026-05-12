@@ -38,7 +38,6 @@ import { DocumentSigningProvider } from '~/components/general/document-signing/d
 import { EnvelopeSigningProvider } from '~/components/general/document-signing/envelope-signing-provider';
 import { RecipientBranding } from '~/components/general/recipient-branding';
 import { useCspNonce } from '~/utils/nonce';
-import { enforceUsOnlySigning } from '~/utils/recipient-geo';
 import { superLoaderJson, useSuperLoaderData } from '~/utils/super-json-loader';
 
 import type { Route } from './+types/_index';
@@ -261,10 +260,6 @@ const handleV2Loader = async ({ params, request }: Route.LoaderArgs) => {
 };
 
 export async function loader(loaderArgs: Route.LoaderArgs) {
-  // D2DHQ fork: block non-US signing attempts before doing any DB work.
-  // No-op when no Cloudflare country header is present (local dev).
-  enforceUsOnlySigning(loaderArgs.request);
-
   const { token } = loaderArgs.params;
 
   if (!token) {
