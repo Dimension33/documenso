@@ -13,7 +13,7 @@ export const RecipientExpiredTemplate = ({
   documentName = 'Open Source Pledge.pdf',
   recipientName = 'John Doe',
   recipientEmail = 'john@example.com',
-  documentLink = 'https://documenso.com',
+  documentLink = 'https://d2dhq.com',
   assetBaseUrl = 'http://localhost:3002',
 }: RecipientExpiredEmailTemplateProps) => {
   const { _ } = useLingui();
@@ -37,7 +37,7 @@ export const RecipientExpiredTemplate = ({
               {branding.brandingEnabled && branding.brandingLogo ? (
                 <Img src={branding.brandingLogo} alt="Branding Logo" className="mb-4 h-6" />
               ) : (
-                <Img src={getAssetUrl('/static/logo.png')} alt="Documenso Logo" className="mb-4 h-6" />
+                <Img src={getAssetUrl('/static/logo.png')} alt="D2DHQ Logo" className="mb-4 h-6" />
               )}
 
               <TemplateRecipientExpired

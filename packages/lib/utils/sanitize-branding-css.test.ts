@@ -6,7 +6,7 @@ const normalize = (css: string) => css.replace(/\s+/g, ' ').trim();
 
 /**
  * The sanitiser does NOT scope selectors. Scoping is applied at render time
- * by wrapping the entire sanitised output in `.documenso-branded { ... }` via
+ * by wrapping the entire sanitised output in `.d2dhq-branded { ... }` via
  * native CSS nesting (see `RecipientBranding`). These tests assert that
  * selectors are preserved verbatim and only validated.
  */
@@ -60,7 +60,7 @@ describe('sanitizeBrandingCss', () => {
       const result = sanitizeBrandingCss('body { background: black; }');
 
       // Selector is left as-is. At render time this becomes
-      // `.documenso-branded body { ... }`, which won't match anything since
+      // `.d2dhq-branded body { ... }`, which won't match anything since
       // <body> is an ancestor of the wrapper. Documented tradeoff.
       expect(normalize(result.css)).toBe('body { background: black; }');
       expect(result.warnings).toEqual([]);

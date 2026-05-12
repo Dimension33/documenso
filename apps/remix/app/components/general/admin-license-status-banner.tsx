@@ -37,10 +37,10 @@ export const AdminLicenseStatusBanner = ({ license }: AdminLicenseStatusBannerPr
             .with('UNAUTHORIZED', () =>
               license ? (
                 <Trans>
-                  Invalid License Type - Your Documenso instance is using features that are not part of your license.
+                  Invalid License Type - Your D2DHQ instance is using features that are not part of your license.
                 </Trans>
               ) : (
-                <Trans>Missing License - Your Documenso instance is using features that require a license.</Trans>
+                <Trans>Missing License - Your D2DHQ instance is using features that require a license.</Trans>
               ),
             )
             .otherwise(() => null)}
@@ -57,7 +57,7 @@ export const AdminLicenseStatusBanner = ({ license }: AdminLicenseStatusBannerPr
           })}
           asChild
         >
-          <Link to="https://docs.documenso.com/users/licenses/enterprise-edition" target="_blank">
+          <Link to="https://www.d2dhq.com/users/licenses/enterprise-edition" target="_blank">
             <KeyRoundIcon className="mr-1.5 h-4 w-4" />
             <Trans>See Documentation</Trans>
           </Link>

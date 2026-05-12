@@ -51,7 +51,7 @@ export default function SupportPage() {
             <h2 className="flex items-center gap-2 font-bold text-lg">
               <BookIcon className="h-5 w-5 text-muted-foreground" />
               <Link
-                to="https://docs.documenso.com"
+                to="https://www.d2dhq.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:underline"
@@ -60,14 +60,14 @@ export default function SupportPage() {
               </Link>
             </h2>
             <p className="mt-1 text-muted-foreground">
-              <Trans>Read our documentation to get started with Documenso.</Trans>
+              <Trans>Read our documentation to get started with D2DHQ.</Trans>
             </p>
           </div>
           <div className="rounded-lg border p-4">
             <h2 className="flex items-center gap-2 font-bold text-lg">
               <Link2Icon className="h-5 w-5 text-muted-foreground" />
               <Link
-                to="https://documen.so/discord"
+                to="https://www.d2dhq.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:underline"
@@ -79,7 +79,7 @@ export default function SupportPage() {
               <Trans>
                 Join our community on{' '}
                 <Link
-                  to="https://documen.so/discord"
+                  to="https://www.d2dhq.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:underline"

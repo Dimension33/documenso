@@ -2,7 +2,7 @@ import { isBase64Image } from '@documenso/lib/constants/signatures';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 // D2DHQ fork: persist the signer's signature across separate documents
-// in the same browser session. Documenso already persists in-memory within
+// in the same browser session. D2DHQ already persists in-memory within
 // a single doc; sessionStorage extends that to the W-9 + contract + ACH
 // packet flow so the signer draws once for all three.
 const SESSION_SIG_KEY = 'd2dhq:lastSignature';

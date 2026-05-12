@@ -233,9 +233,9 @@ export const OrganisationMemberInviteDialog = ({ trigger, ...props }: Organisati
 
   const downloadTemplate = () => {
     const data = [
-      { email: 'admin@documenso.com', role: 'Admin' },
-      { email: 'manager@documenso.com', role: 'Manager' },
-      { email: 'member@documenso.com', role: 'Member' },
+      { email: 'admin@d2dhq.com', role: 'Admin' },
+      { email: 'manager@d2dhq.com', role: 'Manager' },
+      { email: 'member@d2dhq.com', role: 'Member' },
     ];
 
     const csvContent = 'Email address,Role\n' + data.map((row) => `${row.email},${row.role}`).join('\n');
@@ -245,7 +245,7 @@ export const OrganisationMemberInviteDialog = ({ trigger, ...props }: Organisati
     });
 
     downloadFile({
-      filename: 'documenso-organisation-member-invites-template.csv',
+      filename: 'd2dhq-organisation-member-invites-template.csv',
       data: blob,
     });
   };

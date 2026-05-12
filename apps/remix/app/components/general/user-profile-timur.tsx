@@ -21,7 +21,7 @@ export const UserProfileTimur = ({ className, rows = 2 }: UserProfileTimurProps)
       </div>
 
       <div className="mt-4">
-        <img src={timurImage} className="h-20 w-20 rounded-full" alt="image of timur ercan founder of documenso" />
+        <img src={timurImage} className="h-20 w-20 rounded-full" alt="profile photo" />
       </div>
 
       <div className="mt-6">

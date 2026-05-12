@@ -66,7 +66,7 @@ export const ViewRecoveryCodesDialog = () => {
       });
 
       downloadFile({
-        filename: 'documenso-2FA-recovery-codes.txt',
+        filename: 'd2dhq-2FA-recovery-codes.txt',
         data: blob,
       });
     }

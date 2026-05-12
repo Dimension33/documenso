@@ -126,7 +126,7 @@ export const OrganisationBillingBanner = () => {
 
                 <DialogDescription>
                   <Trans>
-                    Your plan is no longer valid. Please subscribe to a new plan to continue using Documenso.
+                    Your plan is no longer valid. Please subscribe to a new plan to continue using D2DHQ.
                   </Trans>
                 </DialogDescription>
               </DialogHeader>

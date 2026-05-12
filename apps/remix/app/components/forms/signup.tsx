@@ -398,7 +398,7 @@ export const SignUpForm = ({
           <Trans>
             By proceeding, you agree to our{' '}
             <Link
-              to="https://documen.so/terms"
+              to="https://www.d2dhq.com"
               target="_blank"
               className="text-documenso-700 duration-200 hover:opacity-70"
             >
@@ -406,7 +406,7 @@ export const SignUpForm = ({
             </Link>{' '}
             and{' '}
             <Link
-              to="https://documen.so/privacy"
+              to="https://www.d2dhq.com"
               target="_blank"
               className="text-documenso-700 duration-200 hover:opacity-70"
             >

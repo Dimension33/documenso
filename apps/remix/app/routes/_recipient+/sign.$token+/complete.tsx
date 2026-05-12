@@ -80,7 +80,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
   // D2DHQ fork: never upsell self-serve account claim on the completion
   // page. Reps signing W-9 / contractor / ACH docs are already onboarded
-  // through our app — pitching them a Documenso account on the success
+  // through our app — pitching them a D2DHQ account on the success
   // screen confuses the flow and leaks our white-label. The
   // getUserByEmail + isSignupEnabledForProvider checks that used to gate
   // this block are dead code now and were removed along with their imports.
@@ -88,9 +88,9 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
   const canRedirectToFolder = user && document.userId === user.id && document.folderId && document.team?.url;
 
-  // D2DHQ fork: anonymous signers (no Documenso user) should land back on
-  // the D2DHQ app, not the Documenso marketing root. The env var lets each
-  // deployment point at its own host; defaults to "/" so vanilla Documenso
+  // D2DHQ fork: anonymous signers (no D2DHQ user) should land back on
+  // the D2DHQ app, not the D2DHQ marketing root. The env var lets each
+  // deployment point at its own host; defaults to "/" so vanilla D2DHQ
   // installs are unaffected.
   const externalReturnUrl = process.env.NEXT_PUBLIC_BACK_TO_APP_URL?.trim() || '/';
   const returnToHomePath = canRedirectToFolder

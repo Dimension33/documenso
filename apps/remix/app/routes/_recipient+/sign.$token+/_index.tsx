@@ -369,7 +369,7 @@ const SigningPageV1 = ({ data }: { data: Awaited<ReturnType<typeof handleV1Loade
             <Trans>This document has been cancelled by the owner.</Trans>
           </p>
 
-          {/* D2DHQ fork: removed the "Check out Documenso" marketing CTA
+          {/* D2DHQ fork: removed the "Check out D2DHQ" marketing CTA
               for unauthenticated viewers. Recipients of D2DHQ contractor
               docs aren't a sales channel for the underlying tool. */}
           {user && (
@@ -448,7 +448,7 @@ const SigningPageV2 = ({ data }: { data: Awaited<ReturnType<typeof handleV2Loade
             <Trans>This document has been cancelled by the owner.</Trans>
           </p>
 
-          {/* D2DHQ fork: removed the "Check out Documenso" marketing CTA
+          {/* D2DHQ fork: removed the "Check out D2DHQ" marketing CTA
               for unauthenticated viewers. Recipients of D2DHQ contractor
               docs aren't a sales channel for the underlying tool. */}
           {user && (

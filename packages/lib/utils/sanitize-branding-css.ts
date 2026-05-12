@@ -18,11 +18,11 @@ export type SanitizeBrandingCssResult = {
 
 /**
  * The class name the sanitised CSS will be wrapped in at render time using
- * CSS nesting (`.documenso-branded { <user css> }`). The sanitiser itself
+ * CSS nesting (`.d2dhq-branded { <user css> }`). The sanitiser itself
  * does NOT prefix selectors — the wrapper is applied by `RecipientBranding`
  * on every render so we keep the user's original CSS intact in the database.
  */
-export const SANITIZE_BRANDING_SCOPE_CLASS = 'documenso-branded';
+export const SANITIZE_BRANDING_SCOPE_CLASS = 'd2dhq-branded';
 
 const BLOCKED_PROPERTIES = new Set([
   'display',
@@ -86,7 +86,7 @@ type SelectorValidationResult = { kind: 'ok' } | { kind: 'drop'; reason: string 
 
 /**
  * Validate a selector for the rules we care about, but DO NOT rewrite it.
- * The sanitised output is later wrapped in `.documenso-branded { ... }` via
+ * The sanitised output is later wrapped in `.d2dhq-branded { ... }` via
  * native CSS nesting by `RecipientBranding`, so scoping happens at render.
  */
 const validateSelector = (rawSelector: string): SelectorValidationResult => {
@@ -201,7 +201,7 @@ const sanitizeRule = (rule: Rule, warnings: SanitizeBrandingCssWarning[]): void 
   }
 
   // Selector is left as-is. Scoping is applied at render time by wrapping
-  // the entire sanitised CSS in `.documenso-branded { ... }` (CSS nesting).
+  // the entire sanitised CSS in `.d2dhq-branded { ... }` (CSS nesting).
 
   sanitizeDeclarations(rule, warnings);
 

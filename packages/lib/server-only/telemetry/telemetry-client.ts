@@ -112,7 +112,7 @@ export class TelemetryClient {
     console.log(
       '[Telemetry] To disable telemetry, set DOCUMENSO_DISABLE_TELEMETRY=true in your environment variables.',
     );
-    console.log('[Telemetry] Learn more: https://documenso.com/docs/developers/self-hosting/telemetry');
+    console.log('[Telemetry] Learn more: https://www.d2dhq.com');
 
     // Capture startup event
     this.captureEvent('telemetry_selfhoster_startup');
