@@ -83,7 +83,11 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   const recipientName =
     recipient.name || fields.find((field) => field.type === FieldType.NAME)?.customText || recipient.email;
 
-  const canSignUp = !isExistingUser && isSignupEnabledForProvider('email');
+  // D2DHQ fork: never upsell self-serve account claim on the completion
+  // page. Reps signing W-9 / contractor / ACH docs are already onboarded
+  // through our app — pitching them a Documenso account on the success
+  // screen confuses the flow and leaks our white-label.
+  const canSignUp = false;
 
   const canRedirectToFolder = user && document.userId === user.id && document.folderId && document.team?.url;
 
