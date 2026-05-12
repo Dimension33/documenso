@@ -1,15 +1,13 @@
 import { prisma } from '@documenso/prisma';
-import { DocumentSource, EnvelopeType, WebhookTriggerEvents } from '@prisma/client';
+import { DocumentSource, EnvelopeType } from '@prisma/client';
 import pMap from 'p-map';
 import { omit } from 'remeda';
 
 import { AppError, AppErrorCode } from '../../errors/app-error';
-import { mapEnvelopeToWebhookDocumentPayload, ZWebhookDocumentSchema } from '../../types/webhook-payload';
 import { nanoid, prefixedId } from '../../universal/id';
 import type { EnvelopeIdOptions } from '../../utils/envelope';
 import { getEnvelopeWhereInput } from '../envelope/get-envelope-by-id';
 import { incrementDocumentId, incrementTemplateId } from '../envelope/increment-id';
-import { triggerWebhook } from '../webhooks/trigger/trigger-webhook';
 
 export interface DuplicateEnvelopeOptions {
   id: EnvelopeIdOptions;
@@ -195,24 +193,11 @@ export const duplicateEnvelope = async ({ id, userId, teamId, overrides }: Dupli
     );
   }
 
-  if (duplicatedEnvelope.type === EnvelopeType.DOCUMENT) {
-    const refetchedEnvelope = await prisma.envelope.findFirstOrThrow({
-      where: {
-        id: duplicatedEnvelope.id,
-      },
-      include: {
-        documentMeta: true,
-        recipients: true,
-      },
-    });
-
-    await triggerWebhook({
-      event: WebhookTriggerEvents.DOCUMENT_CREATED,
-      data: ZWebhookDocumentSchema.parse(mapEnvelopeToWebhookDocumentPayload(refetchedEnvelope)),
-      userId: userId,
-      teamId: teamId,
-    });
-  }
+  // D2DHQ fork: DOCUMENT_CREATED webhook dispatch removed — see
+  // create-envelope.ts for rationale. The DOCUMENT branch that previously
+  // refetched the envelope just to feed the webhook payload is gone with
+  // it. Downstream lifecycle events (DOCUMENT_SENT, DOCUMENT_SIGNED) still
+  // fire normally on their own triggers.
 
   return {
     id: duplicatedEnvelope.id,

@@ -605,14 +605,14 @@ export const createEnvelope = async ({
 
   // Trigger webhook outside the transaction to avoid holding the connection
   // open during network I/O.
-  if (type === EnvelopeType.DOCUMENT) {
-    await triggerWebhook({
-      event: WebhookTriggerEvents.DOCUMENT_CREATED,
-      data: ZWebhookDocumentSchema.parse(mapEnvelopeToWebhookDocumentPayload(createdEnvelope)),
-      userId,
-      teamId,
-    });
-  } else if (type === EnvelopeType.TEMPLATE) {
+  //
+  // D2DHQ fork: skip DOCUMENT_CREATED. Our consumer (the D2DHQ FastAPI app)
+  // writes the local envelope row AFTER distribute_document returns, so the
+  // immediate "created" webhook arrives with a documentId D2DHQ hasn't saved
+  // yet and gets logged as "unknown documentId — ignoring" on every send.
+  // The downstream-relevant events (DOCUMENT_SENT, DOCUMENT_SIGNED, etc.)
+  // still fire on their normal triggers. TEMPLATE_CREATED is unaffected.
+  if (type === EnvelopeType.TEMPLATE) {
     await triggerWebhook({
       event: WebhookTriggerEvents.TEMPLATE_CREATED,
       data: ZWebhookDocumentSchema.parse(mapEnvelopeToWebhookDocumentPayload(createdEnvelope)),

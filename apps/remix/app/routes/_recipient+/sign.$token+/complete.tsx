@@ -1,14 +1,12 @@
 import signingCelebration from '@documenso/assets/images/signing-celebration.png';
 import { getOptionalSession } from '@documenso/auth/server/lib/utils/get-session';
 import { useOptionalSession } from '@documenso/lib/client-only/providers/session';
-import { isSignupEnabledForProvider } from '@documenso/lib/constants/auth';
 import { loadRecipientBrandingByTeamId } from '@documenso/lib/server-only/branding/load-recipient-branding';
 import { getDocumentAndSenderByToken } from '@documenso/lib/server-only/document/get-document-by-token';
 import { isRecipientAuthorized } from '@documenso/lib/server-only/document/is-recipient-authorized';
 import { getFieldsForToken } from '@documenso/lib/server-only/field/get-fields-for-token';
 import { getRecipientByToken } from '@documenso/lib/server-only/recipient/get-recipient-by-token';
 import { getRecipientSignatures } from '@documenso/lib/server-only/recipient/get-recipient-signatures';
-import { getUserByEmail } from '@documenso/lib/server-only/user/get-user-by-email';
 import { isDocumentCompleted } from '@documenso/lib/utils/document';
 import { trpc } from '@documenso/trpc/react';
 import { DocumentShareButton } from '@documenso/ui/components/document/document-share-button';
@@ -76,9 +74,6 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   }
 
   const signatures = await getRecipientSignatures({ recipientId: recipient.id });
-  const isExistingUser = await getUserByEmail({ email: recipient.email })
-    .then((u) => !!u)
-    .catch(() => false);
 
   const recipientName =
     recipient.name || fields.find((field) => field.type === FieldType.NAME)?.customText || recipient.email;
@@ -86,7 +81,9 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   // D2DHQ fork: never upsell self-serve account claim on the completion
   // page. Reps signing W-9 / contractor / ACH docs are already onboarded
   // through our app — pitching them a Documenso account on the success
-  // screen confuses the flow and leaks our white-label.
+  // screen confuses the flow and leaks our white-label. The
+  // getUserByEmail + isSignupEnabledForProvider checks that used to gate
+  // this block are dead code now and were removed along with their imports.
   const canSignUp = false;
 
   const canRedirectToFolder = user && document.userId === user.id && document.folderId && document.team?.url;

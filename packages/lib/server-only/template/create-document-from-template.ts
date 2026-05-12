@@ -756,20 +756,16 @@ export const createDocumentFromTemplate = async ({
 
   // Trigger webhook outside the transaction to avoid holding the connection
   // open during network I/O.
-  await Promise.allSettled([
-    triggerWebhook({
-      event: WebhookTriggerEvents.DOCUMENT_CREATED,
-      data: ZWebhookDocumentSchema.parse(mapEnvelopeToWebhookDocumentPayload(createdEnvelope)),
-      userId,
-      teamId,
-    }),
-    triggerWebhook({
-      event: WebhookTriggerEvents.TEMPLATE_USED,
-      data: ZWebhookDocumentSchema.parse(mapEnvelopeToWebhookDocumentPayload(createdEnvelope)),
-      userId,
-      teamId,
-    }),
-  ]);
+  //
+  // D2DHQ fork: DOCUMENT_CREATED skipped — see create-envelope.ts for
+  // rationale. TEMPLATE_USED still fires (only origin signal that matters
+  // for analytics on which templates get used).
+  await triggerWebhook({
+    event: WebhookTriggerEvents.TEMPLATE_USED,
+    data: ZWebhookDocumentSchema.parse(mapEnvelopeToWebhookDocumentPayload(createdEnvelope)),
+    userId,
+    teamId,
+  });
 
   return envelope;
 };
