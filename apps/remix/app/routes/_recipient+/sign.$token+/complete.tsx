@@ -91,7 +91,14 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
   const canRedirectToFolder = user && document.userId === user.id && document.folderId && document.team?.url;
 
-  const returnToHomePath = canRedirectToFolder ? `/t/${document.team.url}/documents/f/${document.folderId}` : '/';
+  // D2DHQ fork: anonymous signers (no Documenso user) should land back on
+  // the D2DHQ app, not the Documenso marketing root. The env var lets each
+  // deployment point at its own host; defaults to "/" so vanilla Documenso
+  // installs are unaffected.
+  const externalReturnUrl = process.env.NEXT_PUBLIC_BACK_TO_APP_URL?.trim() || '/';
+  const returnToHomePath = canRedirectToFolder
+    ? `/t/${document.team.url}/documents/f/${document.folderId}`
+    : externalReturnUrl;
 
   return {
     isDocumentAccessValid: true,
