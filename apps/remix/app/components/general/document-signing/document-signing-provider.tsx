@@ -1,5 +1,33 @@
 import { isBase64Image } from '@documenso/lib/constants/signatures';
-import { createContext, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+
+// D2DHQ fork: persist the signer's signature across separate documents
+// in the same browser session. Documenso already persists in-memory within
+// a single doc; sessionStorage extends that to the W-9 + contract + ACH
+// packet flow so the signer draws once for all three.
+const SESSION_SIG_KEY = 'd2dhq:lastSignature';
+
+const readSessionSignature = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.sessionStorage.getItem(SESSION_SIG_KEY);
+  } catch {
+    return null;
+  }
+};
+
+const writeSessionSignature = (value: string | null) => {
+  if (typeof window === 'undefined') return;
+  try {
+    if (value) {
+      window.sessionStorage.setItem(SESSION_SIG_KEY, value);
+    } else {
+      window.sessionStorage.removeItem(SESSION_SIG_KEY);
+    }
+  } catch {
+    // sessionStorage can throw in private-browsing modes; swallow.
+  }
+};
 
 export type DocumentSigningContextValue = {
   fullName: string;
@@ -48,23 +76,47 @@ export const DocumentSigningProvider = ({
   const [fullName, setFullName] = useState(initialFullName || '');
   const [email, setEmail] = useState(initialEmail || '');
 
-  // Ensure the user signature doesn't show up if it's not allowed.
-  const [signature, setSignature] = useState(
+  // Pick the starting signature, in order of preference:
+  //   1. initialSignature (from server: prior user signature)
+  //   2. sessionStorage (a signature the same browser just drew on another
+  //      D2DHQ doc — e.g. signed W-9 a minute ago, now opening the contract)
+  //   3. null (signer will be prompted)
+  // Honor the per-doc enabled flags either way (don't surface a drawn
+  // signature if drawing is disabled, etc.).
+  const [signature, setSignatureState] = useState(
     (() => {
-      const sig = initialSignature || '';
-      const isBase64 = isBase64Image(sig);
+      const candidate = initialSignature || readSessionSignature() || '';
+      const isBase64 = isBase64Image(candidate);
 
       if (isBase64 && (uploadSignatureEnabled || drawSignatureEnabled)) {
-        return sig;
+        return candidate;
       }
 
-      if (!isBase64 && typedSignatureEnabled) {
-        return sig;
+      if (!isBase64 && candidate && typedSignatureEnabled) {
+        return candidate;
       }
 
       return null;
     })(),
   );
+
+  // Mirror every signature change to sessionStorage so subsequent docs
+  // in the same session can pre-fill it. Wrapped in useCallback so the
+  // identity is stable for consumers that depend on `setSignature`.
+  const setSignature = useCallback((value: string | null) => {
+    setSignatureState(value);
+    writeSessionSignature(value);
+  }, []);
+
+  // On first mount, if we adopted a signature from sessionStorage above,
+  // make sure it's also written back (covers the case where a different
+  // doc seeded it but we want this provider's snapshot to be authoritative).
+  useEffect(() => {
+    if (signature) {
+      writeSessionSignature(signature);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <DocumentSigningContext.Provider

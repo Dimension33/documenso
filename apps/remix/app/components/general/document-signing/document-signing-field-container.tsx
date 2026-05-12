@@ -57,6 +57,36 @@ export const DocumentSigningFieldContainer = ({
   const parsedFieldMeta = field.fieldMeta ? ZFieldMetaSchema.parse(field.fieldMeta) : undefined;
   const readOnlyField = parsedFieldMeta?.readOnly || false;
 
+  /**
+   * D2DHQ fork: after a field is signed, jump the viewport to the next
+   * uninserted field so the signer doesn't have to scroll-hunt on mobile.
+   *
+   * We can't read field state directly from this container (it only sees
+   * its own field), so we DOM-query the next `[data-inserted="false"]`
+   * after the current one in document order. queueMicrotask defers until
+   * after React commits the new state so the just-signed field has flipped
+   * to `data-inserted="true"`.
+   */
+  const scrollToNextUninsertedField = () => {
+    queueMicrotask(() => {
+      try {
+        const currentEl = document.getElementById(`field-${field.id}`);
+        if (!currentEl) return;
+        const allFields = Array.from(document.querySelectorAll('[id^="field-"][data-inserted]'));
+        const currentIdx = allFields.indexOf(currentEl);
+        if (currentIdx === -1) return;
+        const next = allFields
+          .slice(currentIdx + 1)
+          .find((el) => el.getAttribute('data-inserted') === 'false' && el.getAttribute('data-readonly') !== 'true');
+        if (next) {
+          next.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } catch {
+        // Best-effort — never let an autoscroll bug block signing.
+      }
+    });
+  };
+
   const handleInsertField = async () => {
     if (field.inserted || !onSign) {
       return;
@@ -71,6 +101,7 @@ export const DocumentSigningFieldContainer = ({
       }
 
       await onSign();
+      scrollToNextUninsertedField();
       return;
     }
 
@@ -98,6 +129,7 @@ export const DocumentSigningFieldContainer = ({
       onReauthFormSubmit: onSign,
       actionTarget: field.type,
     });
+    scrollToNextUninsertedField();
   };
 
   const onRemoveSignedFieldClick = async () => {

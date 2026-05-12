@@ -67,13 +67,16 @@ export const SignaturePad = ({
         return 'image';
       }
 
-      // Second passthrough to just select the first avaliable tab.
-      if (drawSignatureEnabled) {
-        return 'draw';
-      }
-
+      // D2DHQ fork: prefer typed signature as the default empty-state tab.
+      // Drawing on a phone (and even with a mouse) is fiddly; typed with a
+      // script font is one tap to commit. Users who want to draw can still
+      // switch with a single tab click.
       if (typedSignatureEnabled) {
         return 'text';
+      }
+
+      if (drawSignatureEnabled) {
+        return 'draw';
       }
 
       if (uploadSignatureEnabled) {
