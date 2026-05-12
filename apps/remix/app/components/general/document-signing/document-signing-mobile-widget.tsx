@@ -7,17 +7,12 @@ import { LucideChevronDown, LucideChevronUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { match } from 'ts-pattern';
 
-import { useEmbedSigningContext } from '~/components/embed/embed-signing-context';
-
-import { BrandingLogo } from '../branding-logo';
 import EnvelopeSignerForm from '../envelope-signing/envelope-signer-form';
 import { EnvelopeSignerCompleteDialog } from '../envelope-signing/envelope-signing-complete-dialog';
 import { useRequiredEnvelopeSigningContext } from './envelope-signing-provider';
 
 export const DocumentSigningMobileWidget = () => {
   const [isExpanded, setIsExpanded] = useState(false);
-
-  const { hidePoweredBy = true } = useEmbedSigningContext() || {};
 
   const { recipientFieldsRemaining, recipient, requiredRecipientFields } = useRequiredEnvelopeSigningContext();
 
@@ -109,14 +104,7 @@ export const DocumentSigningMobileWidget = () => {
             <div className="slide-in-from-bottom-2 animate-in border-border border-t p-4 duration-200">
               <EnvelopeSignerForm />
 
-              {!hidePoweredBy && (
-                <div className="mt-2 inline-block rounded bg-primary px-2 py-1 font-medium text-primary-foreground text-xs opacity-60 hover:opacity-100 lg:hidden">
-                  <span>
-                    <Trans>Powered by</Trans>
-                  </span>
-                  <BrandingLogo className="ml-2 inline-block h-[14px]" />
-                </div>
-              )}
+              {/* D2DHQ fork: "Powered by" badge removed. */}
             </div>
           )}
         </div>
