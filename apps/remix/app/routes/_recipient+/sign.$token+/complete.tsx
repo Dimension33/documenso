@@ -26,10 +26,14 @@ import { ClaimAccount } from '~/components/general/claim-account';
 import { DocumentSigningAuthPageView } from '~/components/general/document-signing/document-signing-auth-page';
 import { RecipientBranding } from '~/components/general/recipient-branding';
 import { useCspNonce } from '~/utils/nonce';
+import { enforceUsOnlySigning } from '~/utils/recipient-geo';
 
 import type { Route } from './+types/complete';
 
 export async function loader({ params, request }: Route.LoaderArgs) {
+  // D2DHQ fork: block non-US signing attempts. See utils/recipient-geo.ts.
+  enforceUsOnlySigning(request);
+
   const { user } = await getOptionalSession(request);
 
   const { token } = params;
