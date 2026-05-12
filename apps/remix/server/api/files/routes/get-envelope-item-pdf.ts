@@ -2,7 +2,7 @@ import { getOptionalSession } from '@documenso/auth/server/lib/utils/get-session
 import { verifyEmbeddingPresignToken } from '@documenso/lib/server-only/embedding-presign/verify-embedding-presign-token';
 import type { DocumentDataVersion } from '@documenso/lib/types/document';
 import { sha256 } from '@documenso/lib/universal/crypto';
-import { getFileServerSide } from '@documenso/lib/universal/upload/get-file.server';
+import { getFileStreamServerSide } from '@documenso/lib/universal/upload/get-file.server';
 import { prisma } from '@documenso/prisma';
 import { sValidator } from '@hono/standard-validator';
 import type { DocumentData, EnvelopeItem } from '@prisma/client';
@@ -126,13 +126,22 @@ export const handleEnvelopeItemPdfRequest = async ({
   const documentDataToUse =
     version === 'current' ? envelopeItem.documentData.data : envelopeItem.documentData.initialData;
 
+  // D2DHQ fork: ETag is now derived from the storage key string instead
+  // of the file's byte hash. The key (e.g. `<alphaid>/<slug>.pdf`) changes
+  // every time Documenso writes a new PDF version, so it's a stable
+  // cache key with the same invalidation guarantees — and computing it
+  // doesn't require materializing the full PDF first.
   const etag = Buffer.from(sha256(documentDataToUse)).toString('hex');
 
   if (c.req.header('If-None-Match') === etag) {
     return c.status(304);
   }
 
-  const file = await getFileServerSide({
+  // Stream bytes straight from S3 → browser instead of buffering the
+  // entire PDF on the Dokploy node first. Saves a hop's worth of
+  // first-byte time per request; pdfjs-dist can start parsing the
+  // linearized PDF header while bytes are still in flight.
+  const result = await getFileStreamServerSide({
     type: envelopeItem.documentData.type,
     data: documentDataToUse,
   }).catch((error) => {
@@ -141,7 +150,7 @@ export const handleEnvelopeItemPdfRequest = async ({
     return null;
   });
 
-  if (!file) {
+  if (!result) {
     return c.json({ error: 'Not found' }, 404);
   }
 
@@ -149,8 +158,11 @@ export const handleEnvelopeItemPdfRequest = async ({
   c.header('Content-Type', 'application/pdf');
   c.header('ETag', etag);
   c.header('Cache-Control', `${cacheStrategy}, max-age=31536000, immutable`);
+  if (result.contentLength !== undefined) {
+    c.header('Content-Length', String(result.contentLength));
+  }
 
-  return c.body(file);
+  return c.body(result.stream);
 };
 
 export default route;

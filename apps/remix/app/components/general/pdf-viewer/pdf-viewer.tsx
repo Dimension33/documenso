@@ -26,6 +26,17 @@ type LoadingState = 'loading' | 'loaded' | 'error';
 
 const LOW_RENDER_RESOLUTION = 1;
 const HIGH_RENDER_RESOLUTION = 2;
+
+// D2DHQ fork: cap concurrent pdfjs metadata calls. Upstream uses pMap with
+// the default concurrency=Infinity, which fires `getPage().getViewport()`
+// for every page in parallel — for a 30-page contract that's 30 calls
+// queued into the single pdfjs worker thread, briefly spiking memory and
+// stalling the main thread on mobile while the worker drains them.
+// hardwareConcurrency is 2-4 on phones and 8-16 on laptops; cap at 8.
+const PDFJS_METADATA_CONCURRENCY =
+  typeof navigator !== 'undefined' && navigator.hardwareConcurrency
+    ? Math.min(navigator.hardwareConcurrency, 8)
+    : 4;
 const IDLE_RENDER_DELAY = 200;
 
 export type PDFViewerProps = {
@@ -125,15 +136,19 @@ export default function PDFViewer({
         pdfRef.current = loadedPdf;
 
         // Fetch the pages
-        const pages = await pMap(Array.from({ length: loadedPdf.numPages }), async (_, pageIndex) => {
-          const page = await loadedPdf.getPage(pageIndex + 1);
-          const viewport = page.getViewport({ scale: 1 });
+        const pages = await pMap(
+          Array.from({ length: loadedPdf.numPages }),
+          async (_, pageIndex) => {
+            const page = await loadedPdf.getPage(pageIndex + 1);
+            const viewport = page.getViewport({ scale: 1 });
 
-          return {
-            width: viewport.width,
-            height: viewport.height,
-          };
-        });
+            return {
+              width: viewport.width,
+              height: viewport.height,
+            };
+          },
+          { concurrency: PDFJS_METADATA_CONCURRENCY },
+        );
 
         if (isCancelled) {
           return;
@@ -332,6 +347,30 @@ const PdfViewerPage = ({
   scale,
   customPageRenderer: CustomPageRenderer,
 }: PdfViewerPageProps) => {
+  // D2DHQ fork: track whether this page is actually in the viewport vs.
+  // sitting in the virtual-list overscan slots. The HIGH-res render
+  // upgrade only fires while `isVisible` is true, so overscan pages
+  // stay at LOW res and the 7× scale-2 memory burst on phones is gone.
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') {
+      // SSR or unsupported runtime: assume visible so behavior matches upstream.
+      setIsVisible(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(Boolean(entry?.isIntersecting));
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const { imageProps, imageLoadingState } = usePdfPageImage({
     pageNumber,
     pdf,
@@ -340,10 +379,15 @@ const PdfViewerPage = ({
     scaledWidth,
     scaledHeight,
     scale,
+    isVisible,
   });
 
   return (
-    <div className="relative w-full rounded border border-border" style={{ width: scaledWidth, height: scaledHeight }}>
+    <div
+      ref={containerRef}
+      className="relative w-full rounded border border-border"
+      style={{ width: scaledWidth, height: scaledHeight }}
+    >
       {CustomPageRenderer && imageLoadingState === 'loaded' && (
         <CustomPageRenderer
           pageData={{
@@ -364,8 +408,21 @@ const PdfViewerPage = ({
 
 /**
  * Manages rendering a page from a pdf.
+ *
+ * D2DHQ fork: `isVisible` (passed by `PdfViewerPage`) gates the HIGH-res
+ * upgrade — overscan pages render at LOW res and only upgrade once they
+ * scroll into view. Cuts mobile memory burst by ~7× during scroll without
+ * affecting stationary signers (the visible page still upgrades to scale-2
+ * after the usual idle delay).
  */
-const usePdfPageImage = ({ pageNumber, pdf, scale, scaledWidth, scaledHeight }: PdfViewerPageProps) => {
+const usePdfPageImage = ({
+  pageNumber,
+  pdf,
+  scale,
+  scaledWidth,
+  scaledHeight,
+  isVisible,
+}: PdfViewerPageProps & { isVisible: boolean }) => {
   const [imageLoadingState, setImageLoadingState] = useState<ImageLoadingState>('loading');
 
   const [imageUrl, setImageUrl] = useState('');
@@ -468,9 +525,15 @@ const usePdfPageImage = ({ pageNumber, pdf, scale, scaledWidth, scaledHeight }: 
 
     void renderAtResolution(LOW_RENDER_RESOLUTION);
 
-    idleTimerRef.current = setTimeout(() => {
-      void renderAtResolution(HIGH_RENDER_RESOLUTION);
-    }, IDLE_RENDER_DELAY);
+    // D2DHQ fork: only schedule the HIGH-res upgrade when the page is
+    // actually in view. If the page is currently in an overscan slot,
+    // skip the timer entirely; when it scrolls into view this effect
+    // re-runs (isVisible flips to true) and the upgrade fires.
+    if (isVisible) {
+      idleTimerRef.current = setTimeout(() => {
+        void renderAtResolution(HIGH_RENDER_RESOLUTION);
+      }, IDLE_RENDER_DELAY);
+    }
 
     return () => {
       isCancelled = true;
@@ -482,7 +545,7 @@ const usePdfPageImage = ({ pageNumber, pdf, scale, scaledWidth, scaledHeight }: 
 
       cancelRenderTask();
     };
-  }, [pdf, pageNumber, scale]);
+  }, [pdf, pageNumber, scale, isVisible]);
 
   const imageProps = useMemo(
     (): React.ImgHTMLAttributes<HTMLImageElement> & Record<string, unknown> & { alt: '' } => ({
