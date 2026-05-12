@@ -3,8 +3,10 @@ import DocumentCancelTemplate from '@documenso/email/templates/document-cancel';
 import { prisma } from '@documenso/prisma';
 import { msg } from '@lingui/core/macro';
 import type { DocumentMeta, Envelope, Recipient, User } from '@prisma/client';
-import { DocumentStatus, EnvelopeType, SendStatus, WebhookTriggerEvents } from '@prisma/client';
+import { DocumentDataType, DocumentStatus, EnvelopeType, SendStatus, WebhookTriggerEvents } from '@prisma/client';
 import { createElement } from 'react';
+
+import { deleteFile } from '../../universal/upload/delete-file';
 
 import { getI18nInstance } from '../../client-only/providers/i18n-server';
 import { NEXT_PUBLIC_WEBAPP_URL } from '../../constants/app';
@@ -161,6 +163,23 @@ const handleDocumentOwnerDelete = async ({ envelope, user, requestMetadata }: Ha
   }
 
   // Hard delete draft and pending documents.
+  //
+  // D2DHQ fork: also cascade-clean the DocumentData rows + their backing
+  // S3/B2 PDF files. Upstream Documenso deletes the Envelope (which
+  // cascades to EnvelopeItem + Recipient) but leaves DocumentData and the
+  // underlying PDF file in storage forever. That accumulates orphan PII
+  // (signed/prefilled W-9s + contractor agreements with names + SSN
+  // overlays) on every "Delete" admin action — bad for compliance and
+  // it bloats storage.
+  //
+  // We collect documentDataIds BEFORE the envelope delete (so Prisma's
+  // cascade through EnvelopeItem doesn't break the join), then delete
+  // the DocumentData rows + S3 objects AFTER the envelope delete commits.
+  const envelopeItemsToCleanup = await prisma.envelopeItem.findMany({
+    where: { envelopeId: envelope.id },
+    select: { documentDataId: true, documentData: { select: { type: true, data: true } } },
+  });
+
   const deletedEnvelope = await prisma.$transaction(async (tx) => {
     // Currently redundant since deleting a document will delete the audit logs.
     // However may be useful if we disassociate audit logs and documents if required.
@@ -184,6 +203,33 @@ const handleDocumentOwnerDelete = async ({ envelope, user, requestMetadata }: Ha
       },
     });
   });
+
+  // Cascade DocumentData + storage cleanup. Best-effort — failures here
+  // are logged but don't roll back the envelope delete (the doc is
+  // already gone from the user's perspective). Repeat-safe: deleting a
+  // missing S3 key is a no-op, and the DocumentData IDs are filtered to
+  // those collected pre-delete.
+  await Promise.allSettled(
+    envelopeItemsToCleanup.map(async ({ documentDataId, documentData }) => {
+      if (documentData?.type === DocumentDataType.S3_PATH && documentData.data) {
+        try {
+          await deleteFile({ type: documentData.type, data: documentData.data });
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.warn(
+            `[delete-document] Failed to delete S3 object for DocumentData ${documentDataId}:`,
+            err,
+          );
+        }
+      }
+      try {
+        await prisma.documentData.delete({ where: { id: documentDataId } });
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.warn(`[delete-document] Failed to delete DocumentData ${documentDataId}:`, err);
+      }
+    }),
+  );
 
   const isEnvelopeDeleteEmailEnabled = extractDerivedDocumentEmailSettings(envelope.documentMeta).documentDeleted;
 
