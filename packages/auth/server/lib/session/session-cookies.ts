@@ -30,7 +30,14 @@ export const sessionCookieOptions = {
   sameSite: useSecureCookies ? 'none' : 'lax',
   secure: useSecureCookies,
   domain: getCookieDomain(),
-  expires: new Date(Date.now() + AUTH_SESSION_LIFETIME),
+  // This module stays loaded for the lifetime of the server process. A plain
+  // Date value here permanently captured the container's startup time, so a
+  // server older than 30 days issued already-expired login cookies even while
+  // it created valid database sessions. Compute expiry whenever a caller
+  // reads the option instead.
+  get expires() {
+    return new Date(Date.now() + AUTH_SESSION_LIFETIME);
+  },
 } as const;
 
 export const extractSessionCookieFromHeaders = (headers: Headers): string | null => {
